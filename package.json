@@ -1,0 +1,22 @@
+{
+  "name": "drive-my-show-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "vercel-build": "node ./build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kazerlelutin/drive-my-show-server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kazerlelutin/drive-my-show-server/issues"
+  },
+  "homepage": "https://github.com/kazerlelutin/drive-my-show-server#readme",
+  "devDependencies": {
+    "@vercel/node": "^2.6.1"
+  }
+}
