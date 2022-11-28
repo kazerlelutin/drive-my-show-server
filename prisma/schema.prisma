@@ -1,0 +1,203 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Profile {
+  free
+  premium
+  all_star
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  twitch_id     String   @unique
+  profile       Profile  @default(free)
+  token_profile String?  @db.LongText
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now()) @db.Timestamp(6)
+
+  channels          Channel[]
+  medias            Media[]
+  broadcasts        Broadcast[]
+  scheduledMessages ScheduledMessages[]
+  editors           Chronicle[]
+}
+
+model Channel {
+  id      Int     @id @default(autoincrement())
+  name    String
+  current Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  broadcast                  Broadcast[]
+  ScheduledMessagesOnChannel ScheduledMessagesOnChannel[]
+}
+
+model Broadcast {
+  id           Int     @id @default(autoincrement())
+  name         String
+  description  String? @db.LongText
+  slider_token String  @db.LongText
+  user         User    @relation(fields: [userId], references: [id])
+  userId       Int
+  channel      Channel @relation(fields: [channelId], references: [id])
+  channelId    Int
+
+  updatedAt         DateTime                        @updatedAt
+  createdAt         DateTime                        @default(now()) @db.Timestamp(6)
+  scheduledMessages ScheduledMessagesOnBroadcasts[]
+  episode           Episode[]
+}
+
+model Episode {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String? @db.LongText
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
+  broadcastId Int
+
+  chronicles        ChroniclesOnEpisodes[]
+  scheduledMessages ScheduledMessagesOnEpisodes[]
+}
+
+enum MediaType {
+  img
+  video
+}
+
+model Media {
+  id     Int       @id @default(autoincrement())
+  title  String
+  type   MediaType
+  url    String    @db.LongText
+  user   User      @relation(fields: [userId], references: [id])
+  userId Int
+
+  source   Link @relation(fields: [sourceId], references: [id])
+  sourceId Int
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model Link {
+  id          Int     @id @default(autoincrement())
+  title       String
+  url         String  @db.LongText
+  description String? @db.LongText
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  medias     Media[]
+  chronicles LinksOnChronicles[]
+}
+
+enum ChronicleState {
+  draft
+  publish
+  read
+}
+
+model Chronicle {
+  id       Int            @id @default(autoincrement())
+  title    String
+  content  String?        @db.LongText
+  position Int
+  state    ChronicleState @default(draft)
+  ownerId  Int
+
+  editor User? @relation(fields: [ownerId], references: [id])
+
+  sources  LinksOnChronicles[]
+  episodes ChroniclesOnEpisodes[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model LinksOnChronicles {
+  link        Link      @relation(fields: [linkId], references: [id])
+  linkId      Int
+  chronicle   Chronicle @relation(fields: [chronicleId], references: [id])
+  chronicleId Int
+  assignedAt  DateTime  @default(now())
+
+  @@id([linkId, chronicleId])
+}
+
+model ChroniclesOnEpisodes {
+  episode     Episode   @relation(fields: [episodeId], references: [id])
+  episodeId   Int
+  chronicle   Chronicle @relation(fields: [chronicleId], references: [id])
+  chronicleId Int
+  assignedAt  DateTime  @default(now())
+
+  @@id([episodeId, chronicleId])
+}
+
+model ScheduledMessages {
+  id      Int     @id @default(autoincrement())
+  title   String
+  content String? @db.LongText
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  broadcasts ScheduledMessagesOnBroadcasts[]
+  channels   ScheduledMessagesOnChannel[]
+  episodes   ScheduledMessagesOnEpisodes[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model ScheduledMessagesOnBroadcasts {
+  broadcast          Broadcast         @relation(fields: [broadcastId], references: [id])
+  broadcastId        Int
+  scheduledMessage   ScheduledMessages @relation(fields: [scheduledMessageId], references: [id])
+  scheduledMessageId Int
+
+  assignedAt DateTime @default(now())
+
+  @@id([broadcastId, scheduledMessageId])
+}
+
+model ScheduledMessagesOnChannel {
+  channel            Channel           @relation(fields: [channelId], references: [id])
+  channelId          Int
+  scheduledMessage   ScheduledMessages @relation(fields: [scheduledMessageId], references: [id])
+  scheduledMessageId Int
+
+  assignedAt DateTime @default(now())
+
+  @@id([channelId, scheduledMessageId])
+}
+
+model ScheduledMessagesOnEpisodes {
+  episode            Episode           @relation(fields: [episodeId], references: [id])
+  episodeId          Int
+  scheduledMessage   ScheduledMessages @relation(fields: [scheduledMessageId], references: [id])
+  scheduledMessageId Int
+
+  assignedAt DateTime @default(now())
+
+  @@id([episodeId, scheduledMessageId])
+}
