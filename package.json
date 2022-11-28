@@ -2,7 +2,6 @@
   "name": "drive-my-show-server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kazerlelutin/drive-my-show-server.git"
@@ -15,12 +14,12 @@
   "homepage": "https://github.com/kazerlelutin/drive-my-show-server#readme",
   "devDependencies": {
     "@types/jsonwebtoken": "^8.5.9",
-    "@vercel/node": "^2.6.1"
+    "@vercel/node": "^2.6.4",
+    "jose": "^4.11.1"
   },
   "dependencies": {
     "@prisma/client": "^4.6.1",
     "axios": "^1.2.0",
-    "jsonwebtoken": "^8.5.1",
     "prisma": "^4.6.1"
   }
 }

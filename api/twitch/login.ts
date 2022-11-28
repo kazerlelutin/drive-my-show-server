@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { twitch } from '../../datasources/twitch'
-import jwt from 'jsonwebtoken'
+import * as jose from 'jose'
 import { JWT_TOKEN } from '../../utils/constants'
 
 export default async function handler(
@@ -12,8 +12,10 @@ export default async function handler(
     const { data } = await twitch.get('helix/users', {
       headers: { Authorization: request.headers.authorization },
     })
+
     const prisma = new PrismaClient()
     const twitchUser = data?.data[0]
+    const secret = new TextEncoder().encode(JWT_TOKEN)
     const existUser = await prisma.user.findFirst({
       where: { twitch_id: twitchUser.id },
       include: {
@@ -33,10 +35,15 @@ export default async function handler(
         },
       })
 
-      const token = jwt.sign(
-        { twitch_id: twitchUser.id, id: user.id },
-        JWT_TOKEN
-      )
+      const token = await new jose.SignJWT({
+        twitch_id: twitchUser.id,
+        id: user.id,
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime('30d')
+        .sign(new TextEncoder().encode(`secret-key-phrase`))
+
       return response.json({
         ...twitchUser,
         token_api: token,
@@ -47,10 +54,15 @@ export default async function handler(
       })
     }
 
-    const token = jwt.sign(
-      { twitch_id: twitchUser.id, id: existUser.id },
-      JWT_TOKEN
-    )
+    const token = await new jose.SignJWT({
+      twitch_id: twitchUser.id,
+      id: existUser.id,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('30d')
+      .sign(secret)
+
     const currentChannel = existUser.channels.find((channel) => channel.current)
 
     return response.json({
