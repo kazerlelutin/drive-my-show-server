@@ -26,9 +26,5 @@ async function handler(
   )
 }
 
-export const config = {
-  runtime: 'experimental-edge',
-}
-
 export default (request: VercelRequest, response: VercelResponse) =>
   auth(request, response, handler)

@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { twitch } from '../../datasources/twitch'
-import * as jose from 'jose'
+import jwt from 'jsonwebtoken'
 import { JWT_TOKEN } from '../../utils/constants'
 
 export default async function handler(
@@ -12,10 +12,8 @@ export default async function handler(
     const { data } = await twitch.get('helix/users', {
       headers: { Authorization: request.headers.authorization },
     })
-
     const prisma = new PrismaClient()
     const twitchUser = data?.data[0]
-    const secret = new TextEncoder().encode(JWT_TOKEN)
     const existUser = await prisma.user.findFirst({
       where: { twitch_id: twitchUser.id },
       include: {
@@ -35,15 +33,10 @@ export default async function handler(
         },
       })
 
-      const token = await new jose.SignJWT({
-        twitch_id: twitchUser.id,
-        id: user.id,
-      })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime('30d')
-        .sign(new TextEncoder().encode(`secret-key-phrase`))
-
+      const token = jwt.sign(
+        { twitch_id: twitchUser.id, id: user.id },
+        JWT_TOKEN
+      )
       return response.json({
         ...twitchUser,
         token_api: token,
@@ -54,15 +47,10 @@ export default async function handler(
       })
     }
 
-    const token = await new jose.SignJWT({
-      twitch_id: twitchUser.id,
-      id: existUser.id,
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('30d')
-      .sign(secret)
-
+    const token = jwt.sign(
+      { twitch_id: twitchUser.id, id: existUser.id },
+      JWT_TOKEN
+    )
     const currentChannel = existUser.channels.find((channel) => channel.current)
 
     return response.json({
@@ -76,8 +64,4 @@ export default async function handler(
   } catch (e: any) {
     response.status(401).json({ message: e.message })
   }
-}
-
-export const config = {
-  runtime: 'experimental-edge',
 }

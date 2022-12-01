@@ -1,7 +1,7 @@
 import { PrismaClient, User } from '@prisma/client'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import jwt from 'jsonwebtoken'
 import { JWT_TOKEN } from '../utils/constants'
-import * as jose from 'jose'
 
 export async function auth(
   request: VercelRequest,
@@ -12,22 +12,33 @@ export async function auth(
     session: User
   ) => Promise<VercelResponse> | VercelResponse
 ) {
+  console.log('__________________')
+
   if (request.method === 'OPTIONS') {
     response.status(200).end()
     return
   }
 
   const token = request.headers.authorization?.replace('Bearer ', '')
-  const secret = new TextEncoder().encode(JWT_TOKEN)
+  console.log('TO', request.headers)
 
   if (!token) return response.status(401).json({ message: 'no token send' })
+  try {
+    jwt.verify(token, JWT_TOKEN)
+  } catch (err) {
+    response.status(401).json({ message: 'token not valid' })
+  }
 
-  const { payload: decoded } = await jose.jwtVerify(token, secret)
+  const decoded = jwt.decode(token)
 
   if (typeof decoded === null || typeof decoded === 'string')
     return response.status(401).json({ message: 'token not valid' })
   if (!decoded?.id)
     return response.status(401).json({ message: 'token not valid' })
+
+  if (typeof decoded?.id !== 'number')
+    return response.status(401).json({ message: 'token not valid' })
+
   const prisma = new PrismaClient()
 
   const session = await prisma.user.findFirst({

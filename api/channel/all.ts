@@ -8,16 +8,13 @@ async function handler(
   session: any
 ) {
   const prisma = new PrismaClient()
+
   return response.json(
     await prisma.channel.findMany({
       where: { userId: session.id },
       orderBy: { current: 'desc' },
     })
   )
-}
-
-export const config = {
-  runtime: 'experimental-edge',
 }
 
 export default (request: VercelRequest, response: VercelResponse) =>
