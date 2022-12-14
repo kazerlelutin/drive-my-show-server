@@ -63,9 +63,10 @@ model Broadcast {
 }
 
 model Episode {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String? @db.LongText
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?  @db.LongText
+  broadcastDate DateTime @updatedAt
 
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now()) @db.Timestamp(6)

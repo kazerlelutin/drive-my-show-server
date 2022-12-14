@@ -9,9 +9,9 @@ async function handler(
   const prisma = new PrismaClient()
 
   return response.json(
-    await prisma.channel.findMany({
+    await prisma.broadcast.findMany({
       where: { userId: session.id },
-      orderBy: { current: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     })
   )
 }

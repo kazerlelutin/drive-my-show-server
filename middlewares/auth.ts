@@ -12,15 +12,12 @@ export async function auth(
     session: User
   ) => Promise<VercelResponse> | VercelResponse
 ) {
-  console.log('__________________')
-
   if (request.method === 'OPTIONS') {
     response.status(200).end()
     return
   }
 
   const token = request.headers.authorization?.replace('Bearer ', '')
-  console.log('TO', request.headers)
 
   if (!token) return response.status(401).json({ message: 'no token send' })
   try {
@@ -33,6 +30,7 @@ export async function auth(
 
   if (typeof decoded === null || typeof decoded === 'string')
     return response.status(401).json({ message: 'token not valid' })
+
   if (!decoded?.id)
     return response.status(401).json({ message: 'token not valid' })
 

@@ -13,7 +13,11 @@ export default async function handler(
       headers: { Authorization: request.headers.authorization },
     })
     const prisma = new PrismaClient()
-    const twitchUser = data?.data[0]
+    const twitchUser: { id: string; login: string } = data?.data[0]
+
+    if (!twitchUser?.id)
+      return response.status(401).json({ message: 'no user in Twitch' })
+
     const existUser = await prisma.user.findFirst({
       where: { twitch_id: twitchUser.id },
       include: {

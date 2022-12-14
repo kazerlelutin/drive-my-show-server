@@ -1,13 +1,12 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, User } from '@prisma/client'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { auth } from '../../middlewares/auth'
 
 async function handler(
   request: VercelRequest,
   response: VercelResponse,
-  session: any
+  session: User
 ) {
-  console.log(request.body)
   if (!request.body?.name)
     return response.status(401).json({ message: 'no name sended' })
   const { name } = request.body
