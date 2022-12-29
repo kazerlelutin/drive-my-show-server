@@ -7,23 +7,17 @@ async function handler(
   response: VercelResponse,
   session: User
 ) {
-  if (!request.body?.id)
-    return response.status(401).json({ message: 'no id sended' })
-  const { id } = request.body
+  if (!request.body?.name)
+    return response.status(401).json({ message: 'no channel sended' })
+  const { name } = request.body
   const prisma = new PrismaClient()
 
-  await prisma.channel.updateMany({
-    where: { userId: session.id },
-    data: { current: false },
+  await prisma.user.updateMany({
+    where: { id: session.id },
+    data: { current_channel: name },
   })
 
-  await prisma.channel.updateMany({
-    where: { id, userId: session.id },
-    data: { current: true },
-  })
-  return response.json(
-    await prisma.channel.findFirst({ where: { id, userId: session.id } })
-  )
+  return response.json({ name })
 }
 
 export default (request: VercelRequest, response: VercelResponse) =>

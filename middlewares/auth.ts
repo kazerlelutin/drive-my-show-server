@@ -44,5 +44,6 @@ export async function auth(
   })
 
   if (!session) return response.status(401).json({ message: 'no user' })
+  if (request.body) request.body = JSON.parse(request.body)
   return handler(request, response, session)
 }

@@ -20,20 +20,15 @@ export default async function handler(
 
     const existUser = await prisma.user.findFirst({
       where: { twitch_id: twitchUser.id },
-      include: {
-        channels: true,
-      },
     })
 
     if (!existUser) {
       const user = await prisma.user.create({
-        data: { twitch_id: twitchUser.id },
-      })
-
-      await prisma.channel.create({
         data: {
-          userId: user.id,
-          name: twitchUser.login,
+          twitch_id: twitchUser.id,
+          current_channel: twitchUser.login,
+          login: twitchUser.login,
+          channel: twitchUser.login,
         },
       })
 
@@ -55,15 +50,13 @@ export default async function handler(
       { twitch_id: twitchUser.id, id: existUser.id },
       JWT_TOKEN
     )
-    const currentChannel = existUser.channels.find((channel) => channel.current)
 
     return response.json({
       ...twitchUser,
       token_api: token,
       token: request.headers.authorization,
       profile: existUser.profile,
-      current_channel: currentChannel?.name || twitchUser.login,
-      channel_count: existUser.channels.length,
+      current_channel: existUser.current_channel,
     })
   } catch (e: any) {
     response.status(401).json({ message: e.message })

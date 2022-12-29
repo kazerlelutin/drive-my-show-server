@@ -17,33 +17,20 @@ enum Profile {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  twitch_id     String   @unique
-  profile       Profile  @default(free)
-  token_profile String?  @db.LongText
-  updatedAt     DateTime @updatedAt
-  createdAt     DateTime @default(now()) @db.Timestamp(6)
+  id              Int      @id @default(autoincrement())
+  twitch_id       String   @unique
+  profile         Profile  @default(free)
+  login           String
+  channel         String
+  token_profile   String?  @db.LongText
+  updatedAt       DateTime @updatedAt
+  current_channel String
+  createdAt       DateTime @default(now()) @db.Timestamp(6)
 
-  channels          Channel[]
   medias            Media[]
   broadcasts        Broadcast[]
   scheduledMessages ScheduledMessages[]
   editors           Chronicle[]
-}
-
-model Channel {
-  id      Int     @id @default(autoincrement())
-  name    String
-  current Boolean @default(true)
-
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
-
-  broadcast                  Broadcast[]
-  ScheduledMessagesOnChannel ScheduledMessagesOnChannel[]
 }
 
 model Broadcast {
@@ -53,8 +40,8 @@ model Broadcast {
   slider_token String  @db.LongText
   user         User    @relation(fields: [userId], references: [id])
   userId       Int
-  channel      Channel @relation(fields: [channelId], references: [id])
-  channelId    Int
+  invite_token String  @db.LongText
+  channel      String
 
   updatedAt         DateTime                        @updatedAt
   createdAt         DateTime                        @default(now()) @db.Timestamp(6)
@@ -125,6 +112,7 @@ model Chronicle {
   state    ChronicleState @default(draft)
   ownerId  Int
 
+  //chroniqueur
   editor User? @relation(fields: [ownerId], references: [id])
 
   sources  LinksOnChronicles[]
@@ -158,12 +146,12 @@ model ScheduledMessages {
   id      Int     @id @default(autoincrement())
   title   String
   content String? @db.LongText
+  channel String?
 
   user   User @relation(fields: [userId], references: [id])
   userId Int
 
   broadcasts ScheduledMessagesOnBroadcasts[]
-  channels   ScheduledMessagesOnChannel[]
   episodes   ScheduledMessagesOnEpisodes[]
 
   updatedAt DateTime @updatedAt
@@ -179,17 +167,6 @@ model ScheduledMessagesOnBroadcasts {
   assignedAt DateTime @default(now())
 
   @@id([broadcastId, scheduledMessageId])
-}
-
-model ScheduledMessagesOnChannel {
-  channel            Channel           @relation(fields: [channelId], references: [id])
-  channelId          Int
-  scheduledMessage   ScheduledMessages @relation(fields: [scheduledMessageId], references: [id])
-  scheduledMessageId Int
-
-  assignedAt DateTime @default(now())
-
-  @@id([channelId, scheduledMessageId])
 }
 
 model ScheduledMessagesOnEpisodes {
