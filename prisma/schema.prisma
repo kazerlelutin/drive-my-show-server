@@ -31,6 +31,7 @@ model User {
   broadcasts        Broadcast[]
   scheduledMessages ScheduledMessages[]
   editors           Chronicle[]
+  UsersOnBroadcasts UsersOnBroadcasts[]
 }
 
 model Broadcast {
@@ -47,6 +48,17 @@ model Broadcast {
   createdAt         DateTime                        @default(now()) @db.Timestamp(6)
   scheduledMessages ScheduledMessagesOnBroadcasts[]
   episode           Episode[]
+  guests            UsersOnBroadcasts[]
+}
+
+model UsersOnBroadcasts {
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
+  broadcastId Int
+  assignedAt  DateTime  @default(now())
+
+  @@id([userId, broadcastId])
 }
 
 model Episode {
