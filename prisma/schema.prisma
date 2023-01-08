@@ -17,7 +17,7 @@ enum Profile {
 }
 
 model User {
-  id              Int      @id @default(autoincrement())
+  id              String   @id @default(uuid())
   twitch_id       String   @unique
   profile         Profile  @default(free)
   login           String
@@ -25,169 +25,165 @@ model User {
   token_profile   String?  @db.LongText
   updatedAt       DateTime @updatedAt
   current_channel String
-  createdAt       DateTime @default(now()) @db.Timestamp(6)
+  slider_token    String   @db.LongText
 
-  medias            Media[]
-  broadcasts        Broadcast[]
-  scheduledMessages ScheduledMessages[]
-  editors           Chronicle[]
-  UsersOnBroadcasts UsersOnBroadcasts[]
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  shows           ShowOnUser[]
+  UserOnChronicle UserOnChronicle[]
 }
 
-model Broadcast {
-  id           Int     @id @default(autoincrement())
-  name         String
-  description  String? @db.LongText
-  slider_token String  @db.LongText
-  user         User    @relation(fields: [userId], references: [id])
-  userId       Int
-  invite_token String  @db.LongText
-  channel      String
-
-  updatedAt         DateTime                        @updatedAt
-  createdAt         DateTime                        @default(now()) @db.Timestamp(6)
-  scheduledMessages ScheduledMessagesOnBroadcasts[]
-  episode           Episode[]
-  guests            UsersOnBroadcasts[]
-}
-
-model UsersOnBroadcasts {
-  user        User      @relation(fields: [userId], references: [id])
-  userId      Int
-  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
-  broadcastId Int
-  assignedAt  DateTime  @default(now())
-
-  @@id([userId, broadcastId])
-}
-
-model Episode {
-  id            Int      @id @default(autoincrement())
-  name          String
-  description   String?  @db.LongText
-  broadcastDate DateTime @updatedAt
-
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-
-  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
-  broadcastId Int
-
-  chronicles        ChroniclesOnEpisodes[]
-  scheduledMessages ScheduledMessagesOnEpisodes[]
-}
-
-enum MediaType {
-  img
-  video
-}
-
-model Media {
-  id     Int       @id @default(autoincrement())
-  title  String
-  type   MediaType
-  url    String    @db.LongText
-  user   User      @relation(fields: [userId], references: [id])
-  userId Int
-
-  source   Link @relation(fields: [sourceId], references: [id])
-  sourceId Int
-
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-}
-
-model Link {
-  id          Int     @id @default(autoincrement())
-  title       String
-  url         String  @db.LongText
+model Show {
+  id          String  @id @default(uuid())
+  name        String
   description String? @db.LongText
+  director_ip String?
+
+  users ShowOnUser[]
 
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now()) @db.Timestamp(6)
-
-  medias     Media[]
-  chronicles LinksOnChronicles[]
 }
 
-enum ChronicleState {
-  draft
-  publish
-  read
+model ShowOnUser {
+  id String @id @default(uuid())
+
+  user_id   String
+  show_id   String
+  users     User      @relation(fields: [user_id], references: [id])
+  shows     Show      @relation(fields: [show_id], references: [id])
+  role      ShowRoles
+  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+}
+
+enum ShowRoles {
+  owner
+  editor
+  director
+  reader
 }
 
 model Chronicle {
-  id       Int            @id @default(autoincrement())
-  title    String
-  content  String?        @db.LongText
-  position Int
-  state    ChronicleState @default(draft)
-  ownerId  Int
-
-  //chroniqueur
-  editor User? @relation(fields: [ownerId], references: [id])
-
-  sources  LinksOnChronicles[]
-  episodes ChroniclesOnEpisodes[]
-
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-}
-
-model LinksOnChronicles {
-  link        Link      @relation(fields: [linkId], references: [id])
-  linkId      Int
-  chronicle   Chronicle @relation(fields: [chronicleId], references: [id])
-  chronicleId Int
-  assignedAt  DateTime  @default(now())
-
-  @@id([linkId, chronicleId])
-}
-
-model ChroniclesOnEpisodes {
-  episode     Episode   @relation(fields: [episodeId], references: [id])
-  episodeId   Int
-  chronicle   Chronicle @relation(fields: [chronicleId], references: [id])
-  chronicleId Int
-  assignedAt  DateTime  @default(now())
-
-  @@id([episodeId, chronicleId])
-}
-
-model ScheduledMessages {
-  id      Int     @id @default(autoincrement())
+  id      String  @id @default(uuid())
   title   String
   content String? @db.LongText
-  channel String?
 
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
+  tags TagOnChronicle[]
 
-  broadcasts ScheduledMessagesOnBroadcasts[]
-  episodes   ScheduledMessagesOnEpisodes[]
+  updatedAt       DateTime          @updatedAt
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  UserOnChronicle UserOnChronicle[]
+}
+
+enum ChronicleRoles {
+  owner
+  reader
+  editor
+}
+
+model UserOnChronicle {
+  id           String         @id @default(uuid())
+  user_id      String
+  chronicle_id String
+  role         ChronicleRoles
+
+  users     User      @relation(fields: [user_id], references: [id])
+  chronicle Chronicle @relation(fields: [chronicle_id], references: [id])
 
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now()) @db.Timestamp(6)
 }
 
-model ScheduledMessagesOnBroadcasts {
-  broadcast          Broadcast         @relation(fields: [broadcastId], references: [id])
-  broadcastId        Int
-  scheduledMessage   ScheduledMessages @relation(fields: [scheduledMessageId], references: [id])
-  scheduledMessageId Int
-
-  assignedAt DateTime @default(now())
-
-  @@id([broadcastId, scheduledMessageId])
+model Tag {
+  id                   String                     @id @default(uuid())
+  name                 String
+  description          String?                    @db.LongText
+  updatedAt            DateTime                   @updatedAt
+  createdAt            DateTime                   @default(now()) @db.Timestamp(6)
+  chronicles           TagOnChronicle[]
+  preSavedChatMessages TagOnPreSavedChatMessage[]
+  medias               TagOnMedia[]
 }
 
-model ScheduledMessagesOnEpisodes {
-  episode            Episode           @relation(fields: [episodeId], references: [id])
-  episodeId          Int
-  scheduledMessage   ScheduledMessages @relation(fields: [scheduledMessageId], references: [id])
-  scheduledMessageId Int
+model TagOnChronicle {
+  id          String    @id @default(uuid())
+  Chronicle   Chronicle @relation(fields: [chronicleId], references: [id])
+  chronicleId String
+  Tag         Tag       @relation(fields: [tagId], references: [id])
+  tagId       String
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+}
 
-  assignedAt DateTime @default(now())
+enum MediaTypes {
+  image
+  video
+  audio
+}
 
-  @@id([episodeId, scheduledMessageId])
+model Media {
+  id          String       @id @default(uuid())
+  name        String
+  description String?      @db.LongText
+  url         String
+  type        MediaTypes
+  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime     @default(now()) @db.Timestamp(6)
+  tags        TagOnMedia[]
+}
+
+model TagOnMedia {
+  id        String   @id @default(uuid())
+  Media     Media    @relation(fields: [mediaId], references: [id])
+  mediaId   String
+  Tag       Tag      @relation(fields: [tagId], references: [id])
+  tagId     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model Metadata {
+  id        String   @id @default(uuid())
+  key       String
+  value     String?  @db.LongText
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model MediaOnChronicle {
+  id           String @id @default(uuid())
+  chronicle_id String
+  media_id     String
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model MetadataOnMedia {
+  id          String @id @default(uuid())
+  media_id    String
+  metadata_id String
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model PreSavedChatMessage {
+  id        String   @id @default(uuid())
+  name      String
+  message   String   @db.LongText
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  tags TagOnPreSavedChatMessage[]
+}
+
+model TagOnPreSavedChatMessage {
+  id                    String               @id @default(uuid())
+  PreSavedChatMessage   PreSavedChatMessage? @relation(fields: [preSavedChatMessageId], references: [id])
+  preSavedChatMessageId String
+  Tag                   Tag?                 @relation(fields: [tagId], references: [id])
+  tagId                 String
+  updatedAt             DateTime             @updatedAt
+  createdAt             DateTime             @default(now()) @db.Timestamp(6)
 }

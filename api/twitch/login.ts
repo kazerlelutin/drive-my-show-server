@@ -3,6 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { twitch } from '../../datasources/twitch'
 import jwt from 'jsonwebtoken'
 import { JWT_TOKEN } from '../../utils/constants'
+import { v5 as uuidv5, v4 as uuidv4 } from 'uuid'
 
 export default async function handler(
   request: VercelRequest,
@@ -29,6 +30,7 @@ export default async function handler(
           current_channel: twitchUser.login,
           login: twitchUser.login,
           channel: twitchUser.login,
+          slider_token: uuidv5(twitchUser.login, uuidv4()),
         },
       })
 
@@ -43,6 +45,7 @@ export default async function handler(
         profile: user.profile,
         current_channel: twitchUser.login,
         channel_count: 1,
+        id: user.id,
       })
     }
 

@@ -34,7 +34,7 @@ export async function auth(
   if (!decoded?.id)
     return response.status(401).json({ message: 'token not valid' })
 
-  if (typeof decoded?.id !== 'number')
+  if (typeof decoded?.id !== 'string')
     return response.status(401).json({ message: 'token not valid' })
 
   const prisma = new PrismaClient()
